@@ -2,7 +2,6 @@ package ratelimit;
 
 import arc.Events;
 import arc.util.Log;
-import arc.util.Strings;
 import arc.util.Timer;
 import mindustry.Vars;
 import mindustry.entities.type.Player;
@@ -57,7 +56,7 @@ public class main extends Plugin {
             }
         },0,10);
         Timer.schedule(() -> {
-            for(Player player:Vars.playerGroup) {
+            for(Player player:Vars.playerGroup.all()) {
                 TempPlayerData tdata = PlayerDataGroup.getOrDefault(player.uuid,null);
                 if(tdata == null) return;
                 if(tdata.interactUntil > 0) {
@@ -68,9 +67,13 @@ public class main extends Plugin {
                     player.con.close();
                 }
                 if(tdata.eventsPerSecond >= minEventsPerSec){
-                    player.sendMessage(Strings.format("[scarlet]You can't interact for {0} seconds because you exceeded rate limit", Double.toString(5 + tdata.rateLimitsExceeded * 0.25)));
-                    tdata.interactUntil = 5;
+                    tdata.rateLimitsExceeded++;
+                    if(tdata.rateLimitsExceeded > 2) {
+                        player.sendMessage("[scarlet]You can't interact for 5 seconds because you exceeded rate limit");
+                        tdata.interactUntil = 5;
+                    }
                 }
+
                 tdata.eventsPerSecond = 0;
             }
         },0 ,1);
